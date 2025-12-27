@@ -113,6 +113,10 @@ if st.sidebar.button("輸入上課情況", use_container_width=True):
     st.session_state['page'] = "輸入上課情況"
     st.rerun()
 
+if st.sidebar.button("手動更新資料", use_container_width=True):
+    st.session_state['page'] = "手動更新資料"
+    st.rerun()
+
 # 頁面邏輯
 now_page = st.session_state['page']
 
@@ -374,3 +378,18 @@ elif now_page == "輸入上課情況":
             st.write("---")
             st.write("#### 該組別課程學生列表")
             st.dataframe(target_df, use_container_width=True)
+
+elif now_page == "手動更新資料":
+    st.title("手動更新資料")
+    st.write("若發現資料未同步，可點擊下方按鈕強制從資料庫重新讀取最新資料。")
+    
+    if st.button("更新資料"):
+        with st.spinner("正在更新資料庫資料，請稍候..."):
+            # 清除快取以確保讀取到最新資料
+            st.cache_data.clear()
+            # 重置 session state 中的資料
+            st.session_state['df_dict'] = None
+            # 重新載入資料
+            load_data()
+        st.success("資料更新成功！現在顯示的是最新資料。")
+
