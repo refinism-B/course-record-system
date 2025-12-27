@@ -2,6 +2,8 @@ import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from mod.O_config import DATABASE_NAME, CRED_PATH, GROUP_LIST
+import streamlit as st
+from streamlit_gsheets import GSheetsConnection
 
 
 def create_client():
@@ -46,7 +48,7 @@ def save_to_sheet(worksheet, df):
     """資料驗證後，直接更新試算表內容（不清除）"""
     if df is None or df.empty:
         raise ValueError("DataFrame 為空，為防止資料遺失，拒絕執行儲存動作。")
-        
+
     try:
         # 修改為僅更新，不進行 clear()，以防止執行失敗導致資料遺失
         worksheet.update([df.columns.values.tolist()] + df.values.tolist())
@@ -67,6 +69,30 @@ def connect_and_read_all_sheets(client):
         df_dict[group] = df
 
     return df_dict
+
+
+def st_connection():
+    conn = st.connection("gsheets", type=GSheetsConnection)
+    return conn
+
+
+def st_read_df(conn, sheet_name):
+    df = conn.read(worksheet=sheet_name, ttl="10m")
+    return df
+
+
+def st_read_all_df(conn):
+    df_dict = {}
+
+    for group in GROUP_LIST:
+        df = st_read_df(conn=conn, sheet_name=group)
+        df_dict[group] = df
+
+    return df_dict
+
+
+def st_save_sheet(conn, df, sheet_name):
+    conn.update(worksheet=sheet_name, data=df)
 
 
 class Student:
