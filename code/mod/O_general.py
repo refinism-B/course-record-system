@@ -1,6 +1,6 @@
 import pandas as pd
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+# import gspread
+# from oauth2client.service_account import ServiceAccountCredentials
 from mod.O_config import DATABASE_NAME, CRED_PATH, GROUP_LIST
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection

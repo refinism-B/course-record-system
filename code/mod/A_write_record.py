@@ -1,4 +1,4 @@
-from mod import O_general as gr
+# from mod import O_general as gr
 from mod.O_config import GROUP_LIST, MANAGER_DICT, MONTH_DICT
 from mod.O_general import Student
 
