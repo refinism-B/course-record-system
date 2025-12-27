@@ -69,6 +69,37 @@ def get_announcement_content():
 # 立即執行資料載入 (符合"系統啟動時就馬上讀取資料庫"的需求)
 load_data()
 
+# Global CSS Styles
+st.markdown("""
+    <style>
+    /* Increase button size (+20%) */
+    .block-container div.stButton > button:first-child {
+        font-size: 120% !important;
+        padding: 0.75rem 1.7rem !important;
+    }
+    
+    /* Increase Tab Group Labels by 25% */
+    .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
+            font-size: 125% !important;
+    }
+    
+    /* Increase Dataframe font size by 2px (assuming default is ~14px, setting to 16px) */
+    [data-testid="stDataFrame"] * {
+        font-size: 16px !important;
+    }
+
+    /* Specific fix for table headers if needed */
+    [data-testid="stDataFrame"] th {
+        font-size: 16px !important;
+    }
+    
+    /* Specific fix for table cells if needed */
+    [data-testid="stDataFrame"] td {
+        font-size: 16px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # 側邊欄導航 (改為按鈕)
 st.sidebar.title("功能列表")
 if st.sidebar.button("首頁", use_container_width=True):
@@ -89,36 +120,7 @@ now_page = st.session_state['page']
 if now_page == "首頁":
     st.title("和散那課程記錄系統")
     
-    # CSS for button sizing (+20%)
-    st.markdown("""
-        <style>
-        /* Increase button size (+20%) */
-        .block-container div.stButton > button:first-child {
-            font-size: 120% !important;
-            padding: 0.75rem 1.7rem !important;
-        }
-        
-        /* Increase Tab Group Labels by 25% */
-        .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
-             font-size: 125% !important;
-        }
-        
-        /* Increase Dataframe font size by 2px (assuming default is ~14px, setting to 16px) */
-        [data-testid="stDataFrame"] * {
-            font-size: 16px !important;
-        }
 
-        /* Specific fix for table headers if needed */
-        [data-testid="stDataFrame"] th {
-            font-size: 16px !important;
-        }
-        
-        /* Specific fix for table cells if needed */
-        [data-testid="stDataFrame"] td {
-            font-size: 16px !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     
