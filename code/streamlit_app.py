@@ -66,8 +66,10 @@ if now_page == "首頁":
     st.title("和散那課程記錄系統")
     st.markdown("""
     功能說明：
-    - **學生總覽**：查看各管理員負責課程的學生名單與詳細資料。
-    - **輸入上課情況**：針對特定學生紀錄每個月的上課狀況。
+    1. 點擊開始使用
+    2. 選擇一位負責人，查看負責人管理的學生列表
+    3. 使用左側「輸入上課情況」功能填寫學生上課情況
+    4. 選擇學生、月份並輸入上課情況後點擊確認送出
     """)
     if st.button("開始使用"):
         # 點擊後跳轉到 學生總覽
@@ -77,7 +79,7 @@ if now_page == "首頁":
 elif now_page == "學生總覽":
     st.title("學生總覽")
 
-    # 選擇管理員
+    # 選擇負責人
     manager_list = list(cfg.MANAGER_DICT.keys())
     # 如果還沒選，預設 None，UI 上顯示 "請選擇"
     current_manager = st.session_state['manager']
@@ -86,19 +88,22 @@ elif now_page == "學生總覽":
     # 如果已在 session 裡有值，就設為那個值，否則保持 None
     
     # Selectbox logic: 為了讓使用者明確感受到"選擇"這個動作，可以加一個空選項
-    options = ["請選擇管理員"] + manager_list
+    options = ["請選擇負責人", "總覽"] + manager_list
     index = 0
-    if current_manager in manager_list:
+    if current_manager in options:
         index = options.index(current_manager)
     
-    selected_option = st.selectbox("請選擇管理員", options, index=index)
+    selected_option = st.selectbox("負責人", options, index=index)
     
-    if selected_option != "請選擇管理員":
+    if selected_option != "請選擇負責人":
         st.session_state['manager'] = selected_option
         manager = selected_option
-        course = cfg.MANAGER_DICT[manager]
         
-        st.subheader(f"管理員：{manager} | 負責課程：{course}")
+        if manager == "總覽":
+             st.subheader(f"總覽所有課程")
+        else:
+             course = cfg.MANAGER_DICT[manager]
+             st.subheader(f"負責人：{manager} | 課程：{course}")
         
         # 標籤切換組別 (Group)
         groups = cfg.GROUP_LIST
@@ -108,30 +113,39 @@ elif now_page == "學生總覽":
             with tabs[i]:
                 df = st.session_state['df_dict'][group]
                 # 篩選課程
-                mask = df["課程"] == course
-                filtered_df = df[mask]
+                if manager == "總覽":
+                    filtered_df = df
+                else:
+                    mask = df["課程"] == course
+                    filtered_df = df[mask]
                 st.dataframe(filtered_df, use_container_width=True)
     else:
         # 如果切換回"請選擇"，也可以把 session 清空或就保持不顯示下半部
-        st.info("請先選擇一位管理員以檢視資料")
+        st.info("請先選擇一位負責人以檢視資料")
         st.session_state['manager'] = None
 
 elif now_page == "輸入上課情況":
     st.title("輸入上課情況")
     
-    # 檢查是否已選擇管理員，若無則提示
-    if st.session_state['manager'] is None:
-        st.warning("尚未選擇管理員，請先選擇：")
+    # 檢查是否已選擇負責人，若無或是總覽則提示
+    if st.session_state['manager'] is None or st.session_state['manager'] == "總覽":
+        if st.session_state['manager'] == "總覽":
+            st.warning("「總覽」模式下無法輸入上課情況，請選擇特定負責人：")
+        else:    
+            st.warning("尚未選擇負責人，請先選擇：")
+            
         manager_list = list(cfg.MANAGER_DICT.keys())
-        options = ["請選擇管理員"] + manager_list
-        selected_option = st.selectbox("請選擇管理員", options)
-        if selected_option != "請選擇管理員":
+        options = ["請選擇負責人"] + manager_list
+        # 這裡不預設選中總覽，因為總覽不能用
+        selected_option = st.selectbox("請選擇負責人", options)
+        
+        if selected_option != "請選擇負責人":
              st.session_state['manager'] = selected_option
              st.rerun()
         else:
              st.stop() # 停止執行下方代碼直到選擇
     else:
-        st.info(f"當前管理員：{st.session_state['manager']}")
+        st.info(f"當前負責人：{st.session_state['manager']}")
 
     manager = st.session_state['manager']
     course = cfg.MANAGER_DICT[manager]
