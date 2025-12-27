@@ -43,13 +43,18 @@ def turn_sheet_to_df(worksheet):
 
 
 def save_to_sheet(worksheet, df):
-    """先將試算表清空後，再存入新資料"""
+    """資料驗證後，直接更新試算表內容（不清除）"""
+    if df is None or df.empty:
+        raise ValueError("DataFrame 為空，為防止資料遺失，拒絕執行儲存動作。")
+        
     try:
-        worksheet.clear()
+        # 修改為僅更新，不進行 clear()，以防止執行失敗導致資料遺失
         worksheet.update([df.columns.values.tolist()] + df.values.tolist())
         print("資料儲存成功！")
     except Exception as e:
         print(f"資料儲存失敗：{e}")
+        # 將錯誤拋出，以便上層 (streamlit) 能夠捕捉並顯示錯誤
+        raise e
 
 
 def connect_and_read_all_sheets(client):
