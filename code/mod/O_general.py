@@ -72,27 +72,66 @@ def connect_and_read_all_sheets(client):
 
 
 def st_connection():
-    conn = st.connection("gsheets", type=GSheetsConnection)
-    return conn
+    """建立 Streamlit Google Sheets 連線"""
+    try:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        return conn
+    except Exception as e:
+        st.error(f"連線失敗：{e}")
+        return None
 
 
 def st_read_df(conn, sheet_name):
-    df = conn.read(worksheet=sheet_name, ttl="10m")
-    return df
+    """
+    使用 st.connection 讀取分頁並轉換為 DataFrame
+    包含資料清洗邏輯：將"生日"欄位格式化為 "MM/DD"
+    """
+    try:
+        # 使用 ttl=0 或較短時間確保資料新鮮度，依需求調整
+        df = conn.read(worksheet=sheet_name, ttl="10m")
+        
+        # 資料清洗 (參考原 turn_sheet_to_df 邏輯)
+        if "生日" in df.columns:
+            # 確保生日欄位為字串型態以免報錯，並補上年份進行轉換
+            df["生日"] = df["生日"].astype(str)
+            # 排除空值或異常值
+            df["生日"] = pd.to_datetime(df["生日"] + "/1900", format="mixed", errors='coerce')
+            df["生日"] = df["生日"].dt.strftime("%m/%d")
+            # 處理轉換失敗的 NaT，轉回空字串或其他預設值
+            df["生日"] = df["生日"].fillna("")
+            
+        return df
+    except Exception as e:
+        st.error(f"讀取分頁 {sheet_name} 失敗：{e}")
+        return pd.DataFrame()
 
 
 def st_read_all_df(conn):
+    """讀取所有群組分頁"""
     df_dict = {}
-
-    for group in GROUP_LIST:
-        df = st_read_df(conn=conn, sheet_name=group)
-        df_dict[group] = df
-
-    return df_dict
+    try:
+        for group in GROUP_LIST:
+            df = st_read_df(conn=conn, sheet_name=group)
+            df_dict[group] = df
+        return df_dict
+    except Exception as e:
+        st.error(f"讀取所有分頁失敗：{e}")
+        return {}
 
 
 def st_save_sheet(conn, df, sheet_name):
-    conn.update(worksheet=sheet_name, data=df)
+    """使用 st.connection 更新分頁資料"""
+    if df is None or df.empty:
+        st.warning("DataFrame 為空，略過儲存。")
+        return
+
+    try:
+        # update 方法會覆蓋資料
+        conn.update(worksheet=sheet_name, data=df)
+        # st.success("資料儲存成功！") # 這裡不顯示 success，交由 UI 層決定顯示
+    except Exception as e:
+        st.error(f"儲存分頁 {sheet_name} 失敗：{e}")
+        raise e
 
 
 class Student:

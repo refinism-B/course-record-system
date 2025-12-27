@@ -12,32 +12,31 @@ st.set_page_config(page_title="和散那課程記錄系統", layout="wide")
 # 初始化 session state
 if 'df_dict' not in st.session_state:
     st.session_state['df_dict'] = None
-if 'client' not in st.session_state:
-    st.session_state['client'] = None
+if 'conn' not in st.session_state:
+    st.session_state['conn'] = None
 if 'manager' not in st.session_state:
     st.session_state['manager'] = None
 if 'page' not in st.session_state:
     st.session_state['page'] = '首頁'
 
 @st.cache_resource
-def get_client():
-    return gr.create_client()
+def get_connection():
+    return gr.st_connection()
 
 def load_data():
-    if st.session_state['client'] is None:
-        st.session_state['client'] = get_client()
+    if st.session_state['conn'] is None:
+        st.session_state['conn'] = get_connection()
     
     # 系統啟動時就讀取資料
     if st.session_state['df_dict'] is None:
         with st.spinner('連接資料庫中...'):
-            st.session_state['df_dict'] = gr.connect_and_read_all_sheets(st.session_state['client'])
+            st.session_state['df_dict'] = gr.st_read_all_df(st.session_state['conn'])
 
 def save_data(group, df):
     """儲存資料到 Google Sheets 並更新 session_state"""
     try:
-        client = st.session_state['client']
-        worksheet = gr.connect_sheet_file(client, group)
-        gr.save_to_sheet(worksheet, df)
+        conn = st.session_state['conn']
+        gr.st_save_sheet(conn, df, group)
         st.success("資料儲存成功！")
         # 更新 session_state 中的資料
         st.session_state['df_dict'][group] = df
