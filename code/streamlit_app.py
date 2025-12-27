@@ -4,6 +4,8 @@ from mod import O_general as gr
 from mod import O_config as cfg
 from mod.O_general import Student
 
+import os
+
 # 設定頁面配置
 st.set_page_config(page_title="和散那課程記錄系統", layout="wide")
 
@@ -42,6 +44,28 @@ def save_data(group, df):
     except Exception as e:
         st.error(f"資料儲存失敗: {e}")
 
+def get_announcement_content():
+    """讀取公告檔案內容"""
+    try:
+        # 假設 announcement.md 位於上一層目錄的 doc 資料夾下
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_dir)
+        file_path = os.path.join(project_root, 'doc', 'announcement.md')
+        
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                
+            # 簡單過濾掉 YAML front matter (--- ... ---)
+            if content.startswith('---'):
+                parts = content.split('---', 2)
+                if len(parts) >= 3:
+                     return parts[2].strip()
+            return content
+        return "找不到公告檔案。"
+    except Exception as e:
+        return f"讀取公告失敗: {e}"
+
 # 立即執行資料載入 (符合"系統啟動時就馬上讀取資料庫"的需求)
 load_data()
 
@@ -64,17 +88,74 @@ now_page = st.session_state['page']
 
 if now_page == "首頁":
     st.title("和散那課程記錄系統")
+    
+    # CSS for button sizing (+20%)
     st.markdown("""
-    功能說明：
-    1. 點擊開始使用
-    2. 選擇一位負責人，查看負責人管理的學生列表
-    3. 使用左側「輸入上課情況」功能填寫學生上課情況
-    4. 選擇學生、月份並輸入上課情況後點擊確認送出
-    """)
-    if st.button("開始使用"):
-        # 點擊後跳轉到 學生總覽
-        st.session_state['page'] = "學生總覽"
-        st.rerun()
+        <style>
+        div.stButton > button:first-child {
+            font-size: 120% !important;
+            padding: 0.75rem 1.7rem !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+    
+    container_style = """
+        padding: 10px 10px 30px 20px; 
+        line-height: 1.6;
+    """
+
+    header_style = """
+        font-size: 30px; 
+        font-weight: bold; 
+        margin-bottom: 30px; 
+        border-bottom: 1px solid #ddd; 
+        padding-bottom: 15px;
+        text-align: center;
+    """
+
+    content_style = "font-size: 17px; text-align: left; margin-top: 10px;"
+    
+    with col1:
+        with st.container(border=True):
+            announcement = get_announcement_content()
+            # Insert styles and structure. 
+            # Note: Putting markdown inside a div in st.markdown with unsafe_allow_html=True
+            # requires extra newlines to trigger markdown processing for lists.
+            st.markdown(f"""
+                <div style="{container_style}">
+                    <div style="{header_style}">課程公告</div>
+                    <div style="{content_style}">
+                    
+{announcement}
+                """, unsafe_allow_html=True)
+        
+    with col2:
+        with st.container(border=True):
+            content_text = """
+1. 點擊開始使用
+2. 選擇一位負責人，查看負責人管理的學生列表
+3. 使用左側「輸入上課情況」功能填寫學生上課情況
+4. 選擇學生、月份並輸入上課情況後點擊確認送出
+            """
+            st.markdown(f"""
+                <div style="{container_style}">
+                    <div style="{header_style}">功能說明</div>
+                    <div style="{content_style}">
+                    
+{content_text}
+                """, unsafe_allow_html=True)
+
+    # Button at bottom, centered
+    st.write("") # Spacer
+    st.write("")
+    _, mid, _ = st.columns([1, 1, 1])
+    with mid:
+        if st.button("開始使用", use_container_width=True):
+            # 點擊後跳轉到 學生總覽
+            st.session_state['page'] = "學生總覽"
+            st.rerun()
 
 elif now_page == "學生總覽":
     st.title("學生總覽")
