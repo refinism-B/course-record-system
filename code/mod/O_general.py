@@ -5,7 +5,7 @@ from mod.O_config import DATABASE_NAME, CRED_PATH, GROUP_LIST
 
 
 def create_client():
-    # 設定使用服務：google drive以及讀取修改的權限
+    """設定使用服務：google drive以及讀取修改的權限"""
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive"
@@ -21,6 +21,7 @@ def create_client():
 
 
 def connect_sheet_file(client, sheet_name):
+    """指定試算表名稱及分頁名稱"""
     # 設定檔名
     file_name = DATABASE_NAME
     spread_sheet = client.open(file_name)
@@ -32,7 +33,7 @@ def connect_sheet_file(client, sheet_name):
 
 
 def turn_sheet_to_df(worksheet):
-    # 以key/value方式讀取檔案，並轉換成df
+    """先以key/value方式讀取檔案，再轉換成df"""
     data = worksheet.get_all_records()
     df = pd.DataFrame(data)
     df["生日"] = pd.to_datetime(df["生日"] + "/1900", format="mixed")
@@ -42,6 +43,7 @@ def turn_sheet_to_df(worksheet):
 
 
 def save_to_sheet(worksheet, df):
+    """先將試算表清空後，再存入新資料"""
     try:
         worksheet.clear()
         worksheet.update([df.columns.values.tolist()] + df.values.tolist())
@@ -51,6 +53,7 @@ def save_to_sheet(worksheet, df):
 
 
 def connect_and_read_all_sheets(client):
+    """讀取檔案後將所有分頁都轉換成df並放入dict"""
     df_dict = {}
 
     for group in GROUP_LIST:
@@ -81,10 +84,10 @@ class Student:
             "姓名": self.name,
             "課程": self.course,
             "生日": self.birthday,
-            "執行狀況：一月": self.jan,
-            "執行狀況：二月": self.feb,
-            "執行狀況：三月": self.mar,
-            "執行狀況：四月": self.apr
+            "一月": self.jan,
+            "二月": self.feb,
+            "三月": self.mar,
+            "四月": self.apr
         }
 
     @classmethod
@@ -93,8 +96,8 @@ class Student:
             name=series["姓名"],
             course=series["課程"],
             birthday=series["生日"],
-            jan=series["執行狀況：一月"],
-            feb=series["執行狀況：二月"],
-            mar=series["執行狀況：三月"],
-            apr=series["執行狀況：四月"]
+            jan=series["一月"],
+            feb=series["二月"],
+            mar=series["三月"],
+            apr=series["四月"]
         )
