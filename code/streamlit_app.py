@@ -92,9 +92,30 @@ if now_page == "首頁":
     # CSS for button sizing (+20%)
     st.markdown("""
         <style>
-        div.stButton > button:first-child {
+        /* Increase button size (+20%) */
+        .block-container div.stButton > button:first-child {
             font-size: 120% !important;
             padding: 0.75rem 1.7rem !important;
+        }
+        
+        /* Increase Tab Group Labels by 25% */
+        .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
+             font-size: 125% !important;
+        }
+        
+        /* Increase Dataframe font size by 2px (assuming default is ~14px, setting to 16px) */
+        [data-testid="stDataFrame"] * {
+            font-size: 16px !important;
+        }
+
+        /* Specific fix for table headers if needed */
+        [data-testid="stDataFrame"] th {
+            font-size: 16px !important;
+        }
+        
+        /* Specific fix for table cells if needed */
+        [data-testid="stDataFrame"] td {
+            font-size: 16px !important;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -162,29 +183,38 @@ elif now_page == "學生總覽":
 
     # 選擇負責人
     manager_list = list(cfg.MANAGER_DICT.keys())
-    # 如果還沒選，預設 None，UI 上顯示 "請選擇"
-    current_manager = st.session_state['manager']
-    
-    # 為了實作"選擇後才顯示"，我們可以用一個 placeholder 或是檢查選單值
-    # 如果已在 session 裡有值，就設為那個值，否則保持 None
-    
-    # Selectbox logic: 為了讓使用者明確感受到"選擇"這個動作，可以加一個空選項
+    # 初始化 session_state 若不在選項中
     options = ["請選擇負責人", "總覽"] + manager_list
-    index = 0
-    if current_manager in options:
-        index = options.index(current_manager)
+    if st.session_state.get('manager') not in options:
+         st.session_state['manager'] = "請選擇負責人"
     
-    selected_option = st.selectbox("負責人", options, index=index)
+    # Callback to sync widget state to global state
+    def update_manager():
+        st.session_state['manager'] = st.session_state['sb_manager_overview']
+
+    # Calculate index based on persistent state
+    try:
+        index = options.index(st.session_state['manager'])
+    except ValueError:
+        index = 0
+
+    # Selectbox logic: 獨立 key 以避免換頁時狀態遺失，並透過 callback 同步
+    selected_option = st.selectbox(
+        "負責人", 
+        options, 
+        index=index,
+        key='sb_manager_overview',
+        on_change=update_manager
+    )
     
-    if selected_option != "請選擇負責人":
-        st.session_state['manager'] = selected_option
-        manager = selected_option
+    if st.session_state['manager'] != "請選擇負責人":
+        # 使用全局狀態
+        manager = st.session_state['manager']
         
         if manager == "總覽":
              st.subheader(f"總覽所有課程")
         else:
              course = cfg.MANAGER_DICT[manager]
-             st.subheader(f"負責人：{manager} | 課程：{course}")
         
         # 標籤切換組別 (Group)
         groups = cfg.GROUP_LIST
@@ -208,25 +238,45 @@ elif now_page == "學生總覽":
 elif now_page == "輸入上課情況":
     st.title("輸入上課情況")
     
-    # 檢查是否已選擇負責人，若無或是總覽則提示
-    if st.session_state['manager'] is None or st.session_state['manager'] == "總覽":
-        if st.session_state['manager'] == "總覽":
-            st.warning("「總覽」模式下無法輸入上課情況，請選擇特定負責人：")
-        else:    
-            st.warning("尚未選擇負責人，請先選擇：")
-            
-        manager_list = list(cfg.MANAGER_DICT.keys())
-        options = ["請選擇負責人"] + manager_list
-        # 這裡不預設選中總覽，因為總覽不能用
-        selected_option = st.selectbox("請選擇負責人", options)
-        
-        if selected_option != "請選擇負責人":
-             st.session_state['manager'] = selected_option
-             st.rerun()
-        else:
-             st.stop() # 停止執行下方代碼直到選擇
+    # 定義 callback 更新 session state
+    def update_manager_input():
+        st.session_state['manager'] = st.session_state['sb_manager_input']
+
+    # 取得負責人列表
+    manager_list = list(cfg.MANAGER_DICT.keys())
+    # 這裡不包含"總覽"，因為輸入頁面不支援總覽功能
+    options = ["請選擇負責人"] + manager_list
+
+    # 計算目前的 index
+    # 如果 manager 是 "總覽" (從總覽頁過來)，在輸入頁面視為未選擇 ("請選擇負責人")
+    current_manager = st.session_state.get('manager')
+    if current_manager == "總覽":
+        index = 0
     else:
-        st.info(f"當前負責人：{st.session_state['manager']}")
+        try:
+            index = options.index(current_manager)
+        except ValueError:
+            index = 0
+
+    # 顯示下拉選單 (總是顯示)
+    st.selectbox(
+        "負責人",
+        options,
+        index=index,
+        key='sb_manager_input',
+        on_change=update_manager_input
+    )
+
+    # 檢查是否選擇了有效的負責人
+    if st.session_state['manager'] in [None, "請選擇負責人", "總覽"]:
+        if st.session_state['manager'] == "總覽":
+             st.warning("「總覽」模式下無法輸入上課情況，請上方選擇特定負責人。")
+        else:
+             st.warning("請先選擇負責人以開始輸入上課情況。")
+        st.stop() # 停止執行下方代碼
+    
+    # 若已選擇負責人，顯示當前負責人 (debug/info用途，可選)
+    # st.info(f"當前負責人：{st.session_state['manager']}")
 
     manager = st.session_state['manager']
     course = cfg.MANAGER_DICT[manager]
