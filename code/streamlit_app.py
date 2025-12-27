@@ -331,14 +331,17 @@ elif now_page == "輸入上課情況":
             with col1:
                 student_names = target_df["姓名"].tolist()
                 selected_students = st.multiselect(
-                    "搜尋並選擇學生 (限選一位)", 
+                    "選擇學生", 
                     student_names, 
+                    placeholder="請選擇學生（一次一位）",
+                    max_selections=1,
                     key=f"student_multiselect_{group}"
                 )
                 
                 comment = st.text_input(
-                    "上課情況 (上限50字)", 
+                    "上課情況", 
                     max_chars=50,
+                    placeholder="請輸入上課情況（最多50字）",
                     key=f"comment_input_{group}"
                 )
 
@@ -346,8 +349,9 @@ elif now_page == "輸入上課情況":
             
             with col2:
                 select_month = st.selectbox(
-                    "修改月份", 
+                    "月份", 
                     ["一月", "二月", "三月", "四月"],
+                    placeholder="請選擇輸入月份",
                     key=f"month_select_{group}"
                 )
             
