@@ -210,3 +210,4 @@ __marimo__/
 /doc/prompt.md
 poetry.lock
 pyproject.toml
+/code/operate.ipynb
